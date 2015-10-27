@@ -1,5 +1,6 @@
 //=============================================================================
 // SpriteWeaponEnhanced.js
+// Version: 1.01
 //=============================================================================
 
 var Imported = Imported || {};
@@ -35,11 +36,17 @@ Rexal.SWE = Rexal.SWE || {};
  
  WeaponMotion: motion
  
- Plays the specified SV motion. This isn't limited to the basic attack motions. Default is swing.
+ Plays the specified attack motion. This isn't limited to the basic attack motions found in SV motions. Default is swing.
  
  WeaponFrames: frames
  
  Sets the amount of frames the weapon image uses. Default is 3.
+ 
+ WeaponSize: widthxheight
+ 
+ Doesn't seem to work yet, but when/if it does, it'll allow you to set an arbitrary size for the weapon. So if you wanted rediculously huge katana or something, this would be the way to do it. Potentially. Default is 96x64.
+
+
  
  ex:
  [EnhancedSprite]
@@ -50,6 +57,22 @@ Rexal.SWE = Rexal.SWE || {};
   
  This will make the weapon a blue staff and have the actor play the skill animation when attacking.
  
+ 
+ Version Log:
+ 
+ v1 - Initial Version
+ 
+ v1.01 - 
+ 
+ -Fixed error when using barehanded.
+ 
+ -Fixed the weapon not showing an animation when its Weapon Type's SV motion is undefined.
+ 
+ -Removed the Sprite_Weapon.prototype.initMembers overwrite function as there was no point to it 
+ and it made certain plugins incompatible.
+ 
+ -WeaponSize is itegrated but most likely not in working condition.
+ Use at your discretion.
  
  */
 
@@ -82,15 +105,13 @@ Game_Actor.prototype.performAttack = function() {
 };
 
 Game_Actor.prototype.performAttackRex = function() {
-	    var weapons = this.weapons();
-    var wtypeId = weapons[0] ? weapons[0].wtypeId : 0;
-    var attackMotion = $dataSystem.attackMotions[wtypeId];
+
+	//attackMotion.weaponImageId = 1;
 	
             this.requestMotion(Rexal.SWE._weaponMotion);
-        this.startWeaponAnimation(attackMotion.weaponImageId);
+        this.startWeaponAnimation(1);
 	
 }
-
  
   //-----------------------------------------------------------------------------
 // Sprite_Actor
@@ -98,7 +119,7 @@ Game_Actor.prototype.performAttackRex = function() {
  
  Sprite_Actor.prototype.setupWeaponAnimation = function() {
     if (this._actor.isWeaponAnimationRequested()) {
-		
+
 		var weapon = $gameParty.battleMembers()[this._actor.index()].weapons()[0];
 
         this._weaponSprite.setupRex(weapon,this._actor.weaponImageId());
@@ -110,26 +131,18 @@ Game_Actor.prototype.performAttackRex = function() {
 // Sprite_Weapon										
 //=============================================================================
 
-Sprite_Weapon.prototype.initMembers = function() {
-    this._weaponImageId = 0;
-    this._animationCount = 0;
-	this._frames = 3;
-    this._pattern = 0;
-    this.anchor.x = 0.5;
-    this.anchor.y = 1;
-    this.x = -16;
-};
 
 
 Sprite_Weapon.prototype.setupRex = function(weapon,id) {
-
+	this._frames = 3;
 	if(!Rexal.SWE.EnhancedSprite)
 	{
 	this.setup(id);
 	return;
 	}
 	
-	
+	this._weaponWidth = Rexal.SWE._weaponW;
+	this._weaponHeight = Rexal.SWE._weaponH;
 	this._weaponImage = Rexal.SWE._weaponImage;
 	this._weaponImageId = Rexal.SWE._weaponID;
 	this._weaponImageHue = Rexal.SWE._weaponHue;
@@ -148,11 +161,11 @@ Sprite_Weapon.prototype.loadBitmapRex = function() {
 Sprite_Weapon.prototype.updateFrameRex = function() {
     if (this._weaponImageId > 0) {
         var index = this._weaponImageID-1;
-        var w = 96;
-        var h = 64;
+        var w = this._weaponWidth;
+        var h = this._weaponHeight;
         var sx = (Math.floor(index / 6) * 3 + this._pattern) * w;
         var sy = Math.floor(index % 6) * h;
-        this.setFrame(sx, sy, w, h);
+        this.setFrame(sx*10, sy, w, h);
     } else {
         this.setFrame(0, 0, 0, 0);
     }
@@ -180,9 +193,14 @@ Rexal.SWE.processWeaponNoteTag = function(obj) {
 Rexal.SWE._weaponImage = 'weapons1';
 Rexal.SWE._weaponMotion = "swing";
 Rexal.SWE._weaponHue = 0;
-Rexal.SWE._weaponID = -1;
+Rexal.SWE._weaponID = 1;
 Rexal.SWE._weaponFrames = 3;
 Rexal.SWE.EnhancedSprite = false;
+Rexal.SWE._weaponW = 96;
+Rexal.SWE._weaponH = 64;
+
+if(obj == null)return;
+	
 
 		var notedata = obj.note.split(/[\r\n]+/);
 
@@ -215,6 +233,14 @@ Rexal.SWE.EnhancedSprite = false;
 		case '[EnhancedSprite]' :
 		Rexal.SWE.EnhancedSprite = true;
 
+		break;
+		
+		case 'WeaponSize' :
+		var wh = lines[1].split('x');
+
+		Rexal.SWE._weaponW = parseInt(wh[0]);
+		Rexal.SWE._weaponH = parseInt(wh[1]);
+		
 		break;
 		
 		}
