@@ -1,6 +1,6 @@
 //=============================================================================
 // SpriteWeaponEnhanced.js
-// Version: 1.1 - Big (fancy) Weapon Edition
+// Version: 1.11 - Big (fancy) Weapon Edition Hotfix
 //=============================================================================
 
 var Imported = Imported || {};
@@ -89,6 +89,10 @@ Rexal.SWE = Rexal.SWE || {};
  - cleaned up the script a bit to make it easier to read.
  - Had no choice but to Overwrite Sprite_Weapon.prototype.update. Fingers crossed that didn't actually do anything negative.
  
+  v1.11 hotfix -
+ 
+ - Fixed the weapon position.
+ 
  */
 
    //-----------------------------------------------------------------------------
@@ -158,8 +162,8 @@ Sprite_Weapon.prototype.setupRex = function(weapon,id) {
 	}
 	this._weaponWidth = Rexal.SWE._width;
 	this._weaponHeight = Rexal.SWE._height;
-	this.x = -(this._weaponWidth/6)+Rexal.SWE._x;
-	this.y = (this._weaponWidth/12)+Rexal.SWE._y;
+	this.x += Rexal.SWE._x;
+	this.y += Rexal.SWE._y;
 	this._weaponImage = Rexal.SWE._image;
 	this._weaponImageId = Rexal.SWE._ID;
 	this._weaponImageHue = Rexal.SWE._hue;
