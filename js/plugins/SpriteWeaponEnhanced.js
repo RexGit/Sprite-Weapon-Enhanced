@@ -1,6 +1,6 @@
 //=============================================================================
 // SpriteWeaponEnhanced.js
-// Version: 1.12 - Big (fancy) Weapon Edition
+// Version: 1.13 - Big (fancy) Weapon Edition
 //=============================================================================
 
 var Imported = Imported || {};
@@ -57,6 +57,7 @@ Rexal.SWE = Rexal.SWE || {};
  
  WeaponSpeed: speed
  
+ Sets the amount of frames the weapon's animation takes to move to the next animation frame. If this tag isn't used, it'll default to (36/frames).
  
  ex:
  [EnhancedSprite]
@@ -101,6 +102,10 @@ Rexal.SWE = Rexal.SWE || {};
  
  - Changed the frame speed of the weapons so they match the default ones.
  - Added WeaponSpeed so you can define your own speed.
+ 
+  v1.13 -
+ 
+ - Made the weapons stay put when you set the offset.
  
  */
 
@@ -171,8 +176,14 @@ Sprite_Weapon.prototype.setupRex = function(weapon,id) {
 	}
 	this._weaponWidth = Rexal.SWE._width;
 	this._weaponHeight = Rexal.SWE._height;
+	
+	if(!this._init)
+	{
 	this.x += Rexal.SWE._x;
 	this.y += Rexal.SWE._y;
+	this._init = true;
+	}
+	
 	this._weaponImage = Rexal.SWE._image;
 	this._weaponImageId = Rexal.SWE._ID;
 	this._weaponImageHue = Rexal.SWE._hue;
