@@ -1,6 +1,6 @@
 //=============================================================================
 // SpriteWeaponEnhanced.js
-// Version: 1.11 - Big (fancy) Weapon Edition Hotfix
+// Version: 1.12 - Big (fancy) Weapon Edition
 //=============================================================================
 
 var Imported = Imported || {};
@@ -10,6 +10,7 @@ var Rexal = Rexal || {};
 Rexal.SWE = Rexal.SWE || {};
 /*:
  * @plugindesc Makes the Weapon's battle image much more customizable.
+ * Version: 1.12 - Big (fancy) Weapon Edition
  * @author Rexal
  *
  * @help
@@ -54,6 +55,9 @@ Rexal.SWE = Rexal.SWE || {};
  
  This will offset the weapon's position by the specified value.
  
+ WeaponSpeed: speed
+ 
+ 
  ex:
  [EnhancedSprite]
  WeaponImage: weapons2
@@ -92,6 +96,11 @@ Rexal.SWE = Rexal.SWE || {};
   v1.11 hotfix -
  
  - Fixed the weapon position.
+
+ v1.12 -
+ 
+ - Changed the frame speed of the weapons so they match the default ones.
+ - Added WeaponSpeed so you can define your own speed.
  
  */
 
@@ -192,7 +201,7 @@ Sprite_Weapon.prototype.updateFrameRex = function() {
     }
 };
 Sprite_Weapon.prototype.animationWait = function() {
-    return 30/this._frames;
+   if(Rexal.SWE._speed > 0) return Rexal.SWE._speed; else return 36/this._frames;
 };
 
 Sprite_Weapon.prototype.update = function() {
@@ -255,6 +264,7 @@ Rexal.SWE._sound.pitch = 100;
 Rexal.SWE._sound.volume = 90;
 Rexal.SWE._x = 0;
 Rexal.SWE._y = 0;
+Rexal.SWE._speed = 0;
 
 
 if(obj == null)return;
@@ -315,7 +325,10 @@ if(obj == null)return;
 
 		Rexal.SWE._x = parseInt(xy[0]);
 		Rexal.SWE._y = parseInt(xy[1]);
+		break;
 		
+				case 'WeaponSpeed' :
+        Rexal.SWE._speed = parseInt(lines[1]);
 		break;
 		
 		}
