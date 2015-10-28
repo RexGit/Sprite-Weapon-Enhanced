@@ -1,6 +1,6 @@
 //=============================================================================
 // SpriteWeaponEnhanced.js
-// Version: 1.01
+// Version: 1.1 - Big (fancy) Weapon Edition
 //=============================================================================
 
 var Imported = Imported || {};
@@ -46,7 +46,13 @@ Rexal.SWE = Rexal.SWE || {};
  
  Doesn't seem to work yet, but when/if it does, it'll allow you to set an arbitrary size for the weapon. So if you wanted rediculously huge katana or something, this would be the way to do it. Potentially. Default is 96x64.
 
-
+ WeaponSound: se, pan, pitch, volume
+ 
+ Plays a sound whenever the actor uses the weapon's attack motion.
+ 
+ WeaponOffset: x,y
+ 
+ This will offset the weapon's position by the specified value.
  
  ex:
  [EnhancedSprite]
@@ -54,8 +60,9 @@ Rexal.SWE = Rexal.SWE || {};
  WeaponID: 2
  WeaponHue: 155
  WeaponMotion: skill
-  
- This will make the weapon a blue staff and have the actor play the skill animation when attacking.
+ WeaponSound: ice2,0,100,100
+ 
+ This will make the weapon a blue staff and have the actor play the skill SV motion while playing the Ice2 SE when attacking.
  
  
  Version Log:
@@ -74,6 +81,14 @@ Rexal.SWE = Rexal.SWE || {};
  -WeaponSize is itegrated but most likely not in working condition.
  Use at your discretion.
  
+ v1.1 -
+ 
+ - Added WeaponSound. It'll have the weapon play a sound whenever the actor attacks.
+ - Added WeaponOffset. This allows you to set the position of the weapon.
+ - WeaponSize actually works as it's supposed to now.
+ - cleaned up the script a bit to make it easier to read.
+ - Had no choice but to Overwrite Sprite_Weapon.prototype.update. Fingers crossed that didn't actually do anything negative.
+ 
  */
 
    //-----------------------------------------------------------------------------
@@ -81,6 +96,7 @@ Rexal.SWE = Rexal.SWE || {};
 //=============================================================================
 
 Game_Actor.prototype.performAttack = function() {
+	
 	Rexal.SWE.processWeaponNoteTag(this.weapons()[0]);
 	
 	if(Rexal.SWE.EnhancedSprite){
@@ -105,10 +121,10 @@ Game_Actor.prototype.performAttack = function() {
 };
 
 Game_Actor.prototype.performAttackRex = function() {
-
-	//attackMotion.weaponImageId = 1;
 	
-            this.requestMotion(Rexal.SWE._weaponMotion);
+	if(Rexal.SWE._playSound){AudioManager.playSe(Rexal.SWE._sound);}
+	
+            this.requestMotion(Rexal.SWE._attackMotion);
         this.startWeaponAnimation(1);
 	
 }
@@ -140,13 +156,14 @@ Sprite_Weapon.prototype.setupRex = function(weapon,id) {
 	this.setup(id);
 	return;
 	}
-	
-	this._weaponWidth = Rexal.SWE._weaponW;
-	this._weaponHeight = Rexal.SWE._weaponH;
-	this._weaponImage = Rexal.SWE._weaponImage;
-	this._weaponImageId = Rexal.SWE._weaponID;
-	this._weaponImageHue = Rexal.SWE._weaponHue;
-	this._frames = Rexal.SWE._weaponFrames;
+	this._weaponWidth = Rexal.SWE._width;
+	this._weaponHeight = Rexal.SWE._height;
+	this.x = -(this._weaponWidth/6)+Rexal.SWE._x;
+	this.y = (this._weaponWidth/12)+Rexal.SWE._y;
+	this._weaponImage = Rexal.SWE._image;
+	this._weaponImageId = Rexal.SWE._ID;
+	this._weaponImageHue = Rexal.SWE._hue;
+	this._frames = Rexal.SWE._frames;
     this._animationCount = 0;
     this._pattern = 0;
     this.loadBitmapRex();
@@ -160,28 +177,57 @@ Sprite_Weapon.prototype.loadBitmapRex = function() {
 
 Sprite_Weapon.prototype.updateFrameRex = function() {
     if (this._weaponImageId > 0) {
-        var index = this._weaponImageID-1;
+        var index = (this._weaponImageId - 1);
         var w = this._weaponWidth;
         var h = this._weaponHeight;
-        var sx = (Math.floor(index / 6) * 3 + this._pattern) * w;
+        var sx = (Math.floor(index / 6) * this._frames + this._pattern) * w;
         var sy = Math.floor(index % 6) * h;
-        this.setFrame(sx*10, sy, w, h);
+        this.setFrame(sx, sy, w, h);
     } else {
         this.setFrame(0, 0, 0, 0);
     }
 };
-
 Sprite_Weapon.prototype.animationWait = function() {
     return 30/this._frames;
 };
 
-Sprite_Weapon.prototype.updatePattern = function() {
+Sprite_Weapon.prototype.update = function() {
+ Sprite_Base.prototype.update.call(this);
+	
+	if(Rexal.SWE.EnhancedSprite)
+	{
+	this.updateRex();
+	return;
+	}
+	
+
+    this._animationCount++;
+    if (this._animationCount >= this.animationWait()) {
+        this.updatePattern();
+        this.updateFrame();
+        this._animationCount = 0;
+    }
+	
+}
+
+
+	Sprite_Weapon.prototype.updateRex = function() {
+    this._animationCount++;
+    
+	if (this._animationCount >= this.animationWait()) {
+        this.updatePatternRex();
+        this.updateFrameRex();
+        this._animationCount = 0;
+    }
+	
+	}
+	
+Sprite_Weapon.prototype.updatePatternRex = function() {
     this._pattern++;
     if (this._pattern >= this._frames) {
         this._weaponImageId = 0;
     }
 };
-
 
   //-----------------------------------------------------------------------------
 // Rex Functions - New Stuff
@@ -190,14 +236,22 @@ Sprite_Weapon.prototype.updatePattern = function() {
 
 Rexal.SWE.processWeaponNoteTag = function(obj) {
 
-Rexal.SWE._weaponImage = 'weapons1';
-Rexal.SWE._weaponMotion = "swing";
-Rexal.SWE._weaponHue = 0;
-Rexal.SWE._weaponID = 1;
-Rexal.SWE._weaponFrames = 3;
+Rexal.SWE._image = 'weapons1';
+Rexal.SWE._attackMotion = "swing";
+Rexal.SWE._hue = 0;
+Rexal.SWE._ID = 1;
+Rexal.SWE._frames = 3;
 Rexal.SWE.EnhancedSprite = false;
-Rexal.SWE._weaponW = 96;
-Rexal.SWE._weaponH = 64;
+Rexal.SWE._width = 96;
+Rexal.SWE._height = 64;
+Rexal.SWE._sound = AudioManager.makeEmptyAudioObject();
+Rexal.SWE._sound.name = 'wind7';
+Rexal.SWE._sound.pan = 0;
+Rexal.SWE._sound.pitch = 100;
+Rexal.SWE._sound.volume = 90;
+Rexal.SWE._x = 0;
+Rexal.SWE._y = 0;
+
 
 if(obj == null)return;
 	
@@ -210,23 +264,23 @@ if(obj == null)return;
 		
 		switch (lines[0]) {
 		case 'WeaponImage' :
-        Rexal.SWE._weaponImage = lines[1];
+        Rexal.SWE._image = lines[1];
 		break;
 					
 		case 'WeaponID' :
-        Rexal.SWE._weaponID = parseInt(lines[1]);
+        Rexal.SWE._ID = parseInt(lines[1]);
 		break;
 		
 		case 'WeaponHue' :
-        Rexal.SWE._weaponHue = parseInt(lines[1]);
+        Rexal.SWE._hue = parseInt(lines[1]);
 		break;
 		
 		case 'WeaponMotion' :
-		Rexal.SWE._weaponMotion = lines[1].toLowerCase();
+		Rexal.SWE._attackMotion = lines[1].toLowerCase();
 		break;
 		
 		case 'WeaponFrames' :
-		Rexal.SWE._weaponFrames = parseInt(lines[1]);
+		Rexal.SWE._frames = parseInt(lines[1]);
 		break;
 		
 		
@@ -238,8 +292,25 @@ if(obj == null)return;
 		case 'WeaponSize' :
 		var wh = lines[1].split('x');
 
-		Rexal.SWE._weaponW = parseInt(wh[0]);
-		Rexal.SWE._weaponH = parseInt(wh[1]);
+		Rexal.SWE._width = parseInt(wh[0]);
+		Rexal.SWE._height = parseInt(wh[1]);
+		
+		break;
+		
+				case 'WeaponSound' :
+		var sound = lines[1].split(', ');
+		Rexal.SWE._playSound = true;
+		Rexal.SWE._sound.name = sound[0];
+		Rexal.SWE._sound.pan = parseInt(sound[1]);
+		Rexal.SWE._sound.pitch = parseInt(sound[2]);
+		Rexal.SWE._sound.volume = parseInt(sound[3]);
+		break;
+		
+				case 'WeaponOffset' :
+		var xy = lines[1].split(',');
+
+		Rexal.SWE._x = parseInt(xy[0]);
+		Rexal.SWE._y = parseInt(xy[1]);
 		
 		break;
 		
